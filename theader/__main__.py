@@ -196,7 +196,7 @@ def addheader(filepath):
             f.write(header)
     else:
         with open(filepath, 'r') as f:
-            contents = header + f.read()
+            contents = header + f.read().replace(r'\r', '')
         with open(filepath, 'w') as f:
             f.write(contents)
 
