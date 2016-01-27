@@ -185,29 +185,33 @@ def render_template(syntax_type, part=None, options={}):
     return render_string
 
 
-def addheader(filepath):
+def addheader(filepath, options):
     syntax_type = get_syntax_type(filepath)
-    header = render_template(syntax_type, 'header', {'path': filepath})
-    if header in ["", None]:
-        return
-    # new file or add header in exists file
-    if not os.path.exists(filepath):
-        with open(filepath, 'w') as f:
-            f.write(header)
-    else:
-        with open(filepath, 'r') as f:
-            contents = header + f.read().replace(r'\r', '')
-        with open(filepath, 'w') as f:
-            f.write(contents)
+    for option in options:
+        header = render_template(syntax_type, option, {'path': filepath})
+        if header in ["", None]:
+            return
+        # new file or add header in exists file
+        if not os.path.exists(filepath):
+            with open(filepath, 'w') as f:
+                f.write(header)
+        else:
+            with open(filepath, 'r') as f:
+                if option == 'header':
+                    contents = header + f.read().replace(r'\r', '')
+                elif option == 'body':
+                    contents = f.read().replace(r'\r', '') + header
+            with open(filepath, 'w') as f:
+                f.write(contents)
 
 
 # 整个文件夹添加header
-def addheaderinfolder(dirpath):
+def addheaderinfolder(dirpath, options=('header',)):
     for root, subdirs, files in os.walk(dirpath):
         for f in files:
             file_name = os.path.join(root, f)
             if can_add(file_name):
-                addheader(file_name)
+                addheader(file_name, options)
 
 
 def doinit():
@@ -224,12 +228,23 @@ def doinit():
 def main():
     # 检测是否初始化
     doinit()
-    filepath = sys.argv[1]
+    options = ('header',)
+    if sys.argv[1].startswith('-'):
+        option = sys.argv[1][1]
+        if option == 'h':
+            options = ('header',)
+        elif option == 'b':
+            options = ('body',)
+        elif option == 'a':
+            options = ('header', 'body')
+        filepath = sys.argv[2]
+    else:
+        filepath = sys.argv[1]
     filepath = os.path.abspath(filepath)
     if os.path.isdir(filepath):
-        addheaderinfolder(filepath)
+        addheaderinfolder(filepath, options)
     else:
-        addheader(filepath)
+        addheader(filepath, options)
 
 if __name__ == '__main__':
     main()

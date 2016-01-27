@@ -5,7 +5,7 @@ import os
 
 setup(
     name="TerminalHeader",
-    version="0.30",
+    version="0.31",
     description="Add File Header use Terminal",
     author="Alan Wang",
     author_email="wangchengchao115@gmail.com",
