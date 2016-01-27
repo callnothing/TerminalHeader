@@ -7,22 +7,24 @@ import re
 import json
 import traceback
 from datetime import datetime
+from os.path import expanduser
 
 if sys.version < '3':
     import commands as process
 else:
     import subprocess as process
 
-SETTINGS_NAME = "FileHeader.default"
+DEFAULT_SETTINGS_NAME = "FileHeader.default"
 CURDIR = os.path.abspath(os.path.join(__file__, os.path.pardir))
-SETTINGS_PATH = os.path.join(CURDIR, "etc", SETTINGS_NAME)
+DEFAULT_SETTINGS_PATH = os.path.join(CURDIR, "etc", DEFAULT_SETTINGS_NAME)
 HEADER_PATH = os.path.join(CURDIR, 'template/header')
 BODY_PATH = os.path.join(CURDIR, 'template/body')
 
 
 def Settings():
     '''Get settings'''
-    with open(SETTINGS_PATH) as filereader:
+    USER_SETTINGS_PATH = os.path.join(expanduser("~"), ".TerminalHeader", "FileHeader.user")
+    with open(USER_SETTINGS_PATH) as filereader:
         contents = filereader.read()
     contents = re.subn("\s+//.*", "", contents)
     contents = re.subn("/\*[\d\D]*?\*/", "", contents[0])
@@ -199,6 +201,7 @@ def addheader(filepath):
             f.write(contents)
 
 
+# 整个文件夹添加header
 def addheaderinfolder(dirpath):
     for root, subdirs, files in os.walk(dirpath):
         for f in files:
@@ -207,7 +210,20 @@ def addheaderinfolder(dirpath):
                 addheader(file_name)
 
 
+def doinit():
+    homedir = expanduser("~")
+    if not os.path.exists(os.path.join(homedir, ".TerminalHeader")):
+        os.mkdir(os.path.join(homedir, ".TerminalHeader"))
+    if not os.path.exists(os.path.join(homedir, ".TerminalHeader", "FileHeader.user")):
+        with open(DEFAULT_SETTINGS_PATH) as filereader:
+            contents = filereader.read()
+            with open(os.path.join(homedir, ".TerminalHeader", "FileHeader.user"), "w") as filewriter:
+                filewriter.write(contents)
+
+
 def main():
+    # 检测是否初始化
+    doinit()
     filepath = sys.argv[1]
     filepath = os.path.abspath(filepath)
     if os.path.isdir(filepath):
